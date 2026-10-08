@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Yazıcı Maliyet Hesaplayıcı</title>
+<meta name="description" content="3D baskı maliyetinizi hesaplayın: filament, elektrik, amorti, fire payı ve kâr oranı.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Tasarım dili: Fine Porcelain × Burnt Ochre (açık)
+     Ink & Copper (koyu)
+     Serif başlıklar · Sans arayüz · Mono sayısal değerler
+     ============================================================ */
+
+  :root {
+    --bg:            #FAF0E1;
+    --surface:       #F2EDEC;
+    --elevated:      #FFFFFF;
+    --text:          #2B2727;
+    --text-2:        #6F6666;
+    --muted:         #8A8584;
+    --border:        #DED8D2;
+    --border-strong: #C4BDB5;
+    --accent:        #BB4F35;
+    --accent-hover:  #A5442D;
+    --accent-active: #8F3A26;
+    --accent-soft:   #F3E1E3;
+    --focus:         #BB4F35;
+    --error:         #B9484E;
+    --error-soft:    #F3D9DA;
+    --error-text:    #8C363B;
+    --on-accent:     #FFFFFF;
+    --radius-s: 4px;
+    --radius-m: 8px;
+    --radius-l: 12px;
+  }
+
+  [data-theme="dark"] {
+    --bg:            #1D2020;
+    --surface:       #272A29;
+    --elevated:      #333735;
+    --text:          #F2EEE8;
+    --text-2:        #C1BCB4;
+    --muted:         #8F8B84;
+    --border:        #444845;
+    --border-strong: #5B605B;
+    --accent:        #C17A5E;
+    --accent-hover:  #D08B6D;
+    --accent-active: #A7624B;
+    --accent-soft:   #473029;
+    --focus:         #D08B6D;
+    --error:         #C2756D;
+    --error-soft:    #49312F;
+    --error-text:    #E19A92;
+    --on-accent:     #FFFFFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Sayfa kabuğu ---------- */
+
+  .shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-family: 'Noto Serif', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .page-subtitle {
+    color: var(--text-2);
+    font-size: 14px;
+    margin-top: 4px;
+    max-width: 52ch;
+  }
+
+  /* Tema düğmesi */
+  .theme-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    padding: 9px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+  }
+  .theme-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .theme-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .theme-btn svg { width: 16px; height: 16px; }
+
+  /* ---------- Çalışma alanı ---------- */
+
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    padding: 22px;
+  }
+
+  .card + .card { margin-top: 20px; }
+
+  .card-title {
+    font-family: 'Noto Serif', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  /* ---------- Form ---------- */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .field .hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .input-wrap.invalid { border-color: var(--error); }
+  .input-wrap.invalid:focus-within { box-shadow: 0 0 0 3px var(--error-soft); }
+
+  .input-wrap input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 9px 12px;
+    font: inherit;
+    color: var(--text);
+  }
+  .input-wrap input:focus { outline: none; }
+  .input-wrap input::placeholder { color: var(--muted); }
+  .input-wrap input[type="number"]::-webkit-outer-spin-button,
+  .input-wrap input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .input-wrap input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+  .unit {
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    border-left: 1px solid var(--border);
+    line-height: 40px;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .field-error {
+    display: none;
+    font-size: 12px;
+    color: var(--error-text);
+  }
+  .field.invalid .field-error { display: block; }
+
+  /* Alan grubu: iki sütunlu sıkı form */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+  }
+  .field-grid .field { margin-bottom: 14px; }
+
+  fieldset { border: 0; }
+  legend {
+    font-family: 'Noto Serif', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .legend-note {
+    display: block;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ---------- Hesapla butonu ---------- */
+
+  .calc-btn {
+    width: 100%;
+    margin-top: 6px;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid transparent;
+    border-radius: var(--radius-m);
+    padding: 11px 18px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .calc-btn:hover { background: var(--accent-hover); }
+  .calc-btn:active { background: var(--accent-active); }
+  .calc-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- Sonuç paneli ---------- */
+
+  .result-card { position: sticky; top: 20px; }
+
+  .result-empty {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 36px 12px;
+  }
+  .result-empty svg {
+    width: 40px; height: 40px;
+    display: block;
+    margin: 0 auto 12px;
+    opacity: 0.5;
+  }
+
+  .result-lines { display: none; }
+  .result-card.has-result .result-lines { display: block; }
+  .result-card.has-result .result-empty { display: none; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .result-row .name { color: var(--text-2); }
+  .result-row .name small { color: var(--muted); font-size: 12px; }
+  .result-row .value {
+    font-family: 'Noto Sans Mono', monospace;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .divider {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+  }
+
+  .result-row.subtotal { margin-top: 2px; }
+  .result-row.subtotal .name  { color: var(--text); font-weight: 600; }
+  .result-row.subtotal .value { font-weight: 600; }
+
+  .result-row.profit .name { color: var(--text-2); }
+
+  .result-row.total {
+    margin-top: 8px;
+    background: var(--accent-soft);
+    border-radius: var(--radius-m);
+    padding: 12px 14px;
+  }
+  .result-row.total .name {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .result-row.total .value {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 19px;
+  }
+
+  /* ---------- Profil kaydet / yükle ---------- */
+
+  .profile-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .profile-bar .field { flex: 1 1 180px; margin-bottom: 0; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--elevated);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-m);
+    padding: 9px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .profile-list-label {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 16px 0 6px;
+    display: block;
+  }
+
+  select {
+    width: 100%;
+    background: var(--elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    padding: 9px 12px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  /* Küçük geri bildirim satırı */
+  .notice {
+    display: none;
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: var(--radius-m);
+  }
+  .notice.ok    { display: block; background: var(--accent-soft); color: var(--text); }
+  .notice.error { display: block; background: var(--error-soft);  color: var(--error-text); }
+
+  /* ---------- Sayfa altı ---------- */
+
+  .footer {
+    margin-top: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .footer code {
+    font-family: 'Noto Sans Mono', monospace;
+    font-size: 11.5px;
+  }
+
+  /* ---------- Duyarlı davranış ---------- */
+
+  @media (max-width: 760px) {
+    .shell { padding: 24px 14px 48px; }
+    .workspace { grid-template-columns: 1fr; }
+    .result-card { position: static; }
+    .page-title { font-size: 24px; }
+    .field-grid { grid-template-columns: 1fr; column-gap: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">3D Yazıcı Maliyet Hesaplayıcı</h1>
+      <p class="page-subtitle">Filament, elektrik ve amorti giderlerini girin; baskınızın üretim maliyetini ve kâr payını ayrı ayrı görün.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Koyu temayı aç/kapat">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+      <span id="themeLabel">Koyu tema</span>
+    </button>
+  </header>
+
+  <main class="workspace">
+
+    <!-- ============ SOL: Girdiler ============ -->
+    <div>
+      <form class="card" id="calcForm" novalidate>
+        <fieldset>
+          <legend>Sabit Ayarlar
+            <span class="legend-note">Yazıcınıza ve tedarikçinize özgü değerler — profiline kaydedilir.</span>
+          </legend>
+
+          <div class="field-grid">
+            <div class="field" data-field>
+              <label for="filamentPrice">Filament fiyatı</label>
+              <div class="input-wrap">
+                <input type="number" id="filamentPrice" step="any" min="0" inputmode="decimal" placeholder="650">
+                <span class="unit">₺/kg</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="powerWatt">Maks. güç tüketimi</label>
+              <div class="input-wrap">
+                <input type="number" id="powerWatt" step="any" min="0" inputmode="decimal" placeholder="150">
+                <span class="unit">W</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="electricityPrice">Elektrik fiyatı</label>
+              <div class="input-wrap">
+                <input type="number" id="electricityPrice" step="any" min="0" inputmode="decimal" placeholder="2,55">
+                <span class="unit">₺/kWh</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="wasteRate">Fire payı</label>
+              <div class="input-wrap">
+                <input type="number" id="wasteRate" step="any" min="0" inputmode="decimal" placeholder="5">
+                <span class="unit">%</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="profitRate">Kâr oranı</label>
+              <div class="input-wrap">
+                <input type="number" id="profitRate" step="any" min="0" inputmode="decimal" placeholder="30">
+                <span class="unit">%</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="amortization">Amorti ücreti</label>
+              <div class="input-wrap">
+                <input type="number" id="amortization" step="any" min="0" inputmode="decimal" placeholder="10">
+                <span class="unit">₺</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+
+      <form class="card" id="printForm" novalidate>
+        <fieldset>
+          <legend>Baskı Bilgileri
+            <span class="legend-note">Slicer çıktısındaki tahmini ağırlık ve süre.</span>
+          </legend>
+
+          <div class="field-grid">
+            <div class="field" data-field>
+              <label for="printWeight">Baskı ağırlığı</label>
+              <div class="input-wrap">
+                <input type="number" id="printWeight" step="any" min="0" inputmode="decimal" placeholder="85">
+                <span class="unit">g</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+
+            <div class="field" data-field>
+              <label for="printHours">Baskı süresi</label>
+              <div class="input-wrap">
+                <input type="number" id="printHours" step="any" min="0" inputmode="decimal" placeholder="6,5">
+                <span class="unit">saat</span>
+              </div>
+              <span class="field-error">Geçerli bir sayı girin.</span>
+            </div>
+          </div>
+
+          <button class="calc-btn" type="submit">Hesapla</button>
+        </fieldset>
+      </form>
+
+      <!-- Profil kaydet / yükle -->
+      <section class="card" aria-labelledby="profilesTitle">
+        <h2 class="card-title" id="profilesTitle">Profiller</h2>
+        <p class="card-desc">Sabit ayarlarınızı isim vererek kaydedin; tarayıcınızda saklanır, isterseniz dosya olarak yedekleyin.</p>
+
+        <div class="profile-bar">
+          <div class="field">
+            <label for="profileName">Profil adı</label>
+            <div class="input-wrap">
+              <input type="text" id="profileName" maxlength="40" placeholder="örn. Bambu PLA — gece tarifesi">
+            </div>
+          </div>
+          <button class="btn" type="button" id="saveBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Kaydet
+          </button>
+        </div>
+
+        <label class="profile-list-label" for="profileSelect">Kayıtlı profiller</label>
+        <select id="profileSelect" size="0">
+          <option value="">— Profil seçin —</option>
+        </select>
+
+        <div class="btn-row">
+          <button class="btn" type="button" id="loadBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+            Yükle
+          </button>
+          <button class="btn" type="button" id="deleteBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Sil
+          </button>
+          <button class="btn" type="button" id="exportBtn" title="Tüm profilleri JSON olarak indir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Dışa aktar
+          </button>
+          <button class="btn" type="button" id="importBtn" title="JSON yedeğini içe aktar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            İçe aktar
+          </button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+
+        <p class="notice" id="profileNotice" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+
+    <!-- ============ SAĞ: Sonuçlar ============ -->
+    <section class="card result-card" id="resultCard" aria-labelledby="resultTitle">
+      <h2 class="card-title" id="resultTitle">Sonuç</h2>
+      <p class="card-desc">Üretim maliyeti kâr hariçtir; kâr payı ayrı satırda gösterilir.</p>
+
+      <div class="result-empty" id="resultEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>
+        Değerleri girip <strong>Hesapla</strong>'ya basın.
+      </div>
+
+      <div class="result-lines" id="resultLines" aria-live="polite">
+        <div class="result-row">
+          <span class="name">Filament <small id="filamentDetail"></small></span>
+          <span class="value" id="filamentCost">—</span>
+        </div>
+        <div class="result-row">
+          <span class="name">Elektrik <small id="electricDetail"></small></span>
+          <span class="value" id="electricCost">—</span>
+        </div>
+        <div class="result-row">
+          <span class="name">Amorti</span>
+          <span class="value" id="amortCost">—</span>
+        </div>
+
+        <hr class="divider">
+
+        <div class="result-row subtotal">
+          <span class="name">Üretim maliyeti</span>
+          <span class="value" id="totalCost">—</span>
+        </div>
+        <div class="result-row profit">
+          <span class="name">Kâr payı <small id="profitDetail"></small></span>
+          <span class="value" id="profitAmount">—</span>
+        </div>
+
+        <div class="result-row total">
+          <span class="name">Satış fiyatı</span>
+          <span class="value" id="salePrice">—</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    Formül: <code>filament = ağırlık/1000 × kg fiyatı × (1 + fire%)</code> ·
+    <code>elektrik = (W/1000) × süre × kWh fiyatı</code> ·
+    <code>satış = (filament + elektrik + amorti) × (1 + kâr%)</code>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Kısayollar ---------- */
+  const $ = (id) => document.getElementById(id);
+
+  const money = new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const fmt = (n) => money.format(n) + ' ₺';
+
+  /* ---------- Tema ---------- */
+  const themeBtn = $('themeBtn');
+  const themeIcon = $('themeIcon');
+  const themeLabel = $('themeLabel');
+
+  const ICON_MOON  = '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+  const ICON_SUN   = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.9" y1="4.9" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.1" y2="19.1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.9" y1="19.1" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.1" y2="4.9"/>';
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    themeIcon.innerHTML = dark ? ICON_SUN : ICON_MOON;
+    themeLabel.textContent = dark ? 'Açık tema' : 'Koyu tema';
+    themeBtn.setAttribute('aria-label', dark ? 'Açık temaya geç' : 'Koyu temaya geç');
+    try { localStorage.setItem('baski-tema', dark ? 'dark' : 'light'); } catch (e) {}
+  }
+
+  let startDark = false;
+  try {
+    const saved = localStorage.getItem('baski-tema');
+    startDark = saved ? saved === 'dark'
+                      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch (e) {}
+  applyTheme(startDark);
+
+  themeBtn.addEventListener('click', () => {
+    applyTheme(document.documentElement.getAttribute('data-theme') !== 'dark');
+  });
+
+  /* ---------- Hesaplama ---------- */
+  const INPUT_IDS = ['filamentPrice', 'powerWatt', 'electricityPrice', 'wasteRate',
+                     'profitRate', 'amortization', 'printWeight', 'printHours'];
+
+  function readInputs() {
+    const out = { valid: true };
+    for (const id of INPUT_IDS) {
+      const wrap = $(id).closest('.input-wrap');
+      const field = $(id).closest('.field');
+      const raw = $(id).value.trim().replace(',', '.');
+      const num = Number(raw);
+      const ok = raw !== '' && isFinite(num) && num >= 0;
+      wrap.classList.toggle('invalid', !ok);
+      field.classList.toggle('invalid', !ok);
+      if (!ok) out.valid = false;
+      out[id] = ok ? num : null;
+    }
+    return out;
+  }
+
+  function clearErrors() {
+    for (const id of INPUT_IDS) {
+      $(id).closest('.input-wrap').classList.remove('invalid');
+      $(id).closest('.field').classList.remove('invalid');
+    }
+  }
+
+  let calculatedOnce = false;
+
+  function calculate() {
+    calculatedOnce = true;
+    const v = readInputs();
+    const card = $('resultCard');
+    if (!v.valid) {
+      card.classList.remove('has-result');
+      return;
+    }
+
+    // 1) Filament: ağırlık/1000 × kg fiyatı × (1 + fire%)
+    const filament = (v.printWeight / 1000) * v.filamentPrice * (1 + v.wasteRate / 100);
+
+    // 2) Elektrik: (W/1000) × süre × kWh fiyatı
+    const electric = (v.powerWatt / 1000) * v.printHours * v.electricityPrice;
+
+    // 3) Amorti: sabit tutar
+    const amorti = v.amortization;
+
+    // 4) Üretim maliyeti (kâr hariç)
+    const cost = filament + electric + amorti;
+
+    // 5) Kâr payı (ayrı gösterilir)
+    const profit = cost * v.profitRate / 100;
+
+    // 6) Satış fiyatı
+    const sale = cost + profit;
+
+    $('filamentDetail').textContent  = v.printWeight + ' g · %' + money.format(v.wasteRate) + ' fire dahil';
+    $('electricDetail').textContent  = v.powerWatt + ' W × ' + money.format(v.printHours) + ' sa';
+    $('filamentCost').textContent    = fmt(filament);
+    $('electricCost').textContent    = fmt(electric);
+    $('amortCost').textContent       = fmt(amorti);
+    $('totalCost').textContent       = fmt(cost);
+    $('profitDetail').textContent    = '%' + money.format(v.profitRate);
+    $('profitAmount').textContent    = fmt(profit);
+    $('salePrice').textContent       = fmt(sale);
+
+    card.classList.add('has-result');
+  }
+
+  $('calcForm').addEventListener('submit', (e) => { e.preventDefault(); calculate(); });
+  $('printForm').addEventListener('submit', (e) => { e.preventDefault(); calculate(); });
+
+  // İlk hesaplamadan sonra canlı güncelle
+  for (const id of INPUT_IDS) {
+    $(id).addEventListener('input', () => { if (calculatedOnce) calculate(); });
+  }
+
+  /* ---------- Profiller ---------- */
+  const STORAGE_KEY = 'baski-profilleri';
+
+  function loadProfiles() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) { return {}; }
+  }
+
+  function storeProfiles(obj) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); return true; }
+    catch (e) { notice('Profil kaydedilemedi: tarayıcı deposu kullanılamıyor.', true); return false; }
+  }
+
+  let profiles = loadProfiles();
+
+  const noticeEl = $('profileNotice');
+  let noticeTimer = null;
+  function notice(msg, isError) {
+    noticeEl.textContent = msg;
+    noticeEl.className = 'notice ' + (isError ? 'error' : 'ok');
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { noticeEl.className = 'notice'; }, 3200);
+  }
+
+  function refreshSelect() {
+    const sel = $('profileSelect');
+    const current = sel.value;
+    sel.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— Profil seçin —';
+    sel.appendChild(placeholder);
+    for (const name of Object.keys(profiles).sort((a, b) => a.localeCompare(b, 'tr'))) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+    sel.value = profiles[current] !== undefined ? current : '';
+    syncProfileButtons();
+  }
+
+  function syncProfileButtons() {
+    const has = $('profileSelect').value !== '';
+    $('loadBtn').disabled = !has;
+    $('deleteBtn').disabled = !has;
+    $('exportBtn').disabled = Object.keys(profiles).length === 0;
+  }
+
+  function currentValues() {
+    const obj = {};
+    for (const id of INPUT_IDS) obj[id] = $(id).value;
+    return obj;
+  }
+
+  function applyValues(obj) {
+    for (const id of INPUT_IDS) $(id).value = obj[id] !== undefined ? obj[id] : '';
+    clearErrors();
+    $('resultCard').classList.remove('has-result');
+    calculatedOnce = false;
+  }
+
+  $('saveBtn').addEventListener('click', () => {
+    const name = $('profileName').value.trim();
+    if (!name) { notice('Önce profile bir isim verin.', true); $('profileName').focus(); return; }
+    profiles[name] = currentValues();
+    if (storeProfiles(profiles)) {
+      refreshSelect();
+      $('profileSelect').value = name;
+      syncProfileButtons();
+      notice('"' + name + '" profili kaydedildi.');
+    }
+  });
+
+  $('loadBtn').addEventListener('click', () => {
+    const name = $('profileSelect').value;
+    if (!name || profiles[name] === undefined) return;
+    applyValues(profiles[name]);
+    $('profileName').value = name;
+    notice('"' + name + '" profili yüklendi.');
+  });
+
+  $('deleteBtn').addEventListener('click', () => {
+    const name = $('profileSelect').value;
+    if (!name) return;
+    delete profiles[name];
+    storeProfiles(profiles);
+    refreshSelect();
+    notice('"' + name + '" profili silindi.');
+  });
+
+  $('profileSelect').addEventListener('change', syncProfileButtons);
+
+  /* Dışa aktar: tüm profilleri JSON dosyası olarak indir */
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(profiles, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'baski-profilleri.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    notice('Profiller dosya olarak indirildi.');
+  });
+
+  /* İçe aktar: JSON yedeğini birleştir */
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+
+  $('importFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('format');
+        }
+        let count = 0;
+        for (const [name, values] of Object.entries(data)) {
+          if (values && typeof values === 'object') {
+            profiles[String(name).slice(0, 40)] = values;
+            count++;
+          }
+        }
+        if (count === 0) throw new Error('bos');
+        storeProfiles(profiles);
+        refreshSelect();
+        notice(count + ' profil içe aktarıldı.');
+      } catch (err) {
+        notice('Dosya okunamadı: geçerli bir profil yedeği değil.', true);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  refreshSelect();
+})();
+</script>
+</body>
+</html>
