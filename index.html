@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Yazıcı Maliyet Hesaplayıcı</title>
-<meta name="description" content="3D baskı maliyetinizi hesaplayın: filament, elektrik, amorti, fire payı ve kâr oranı.">
+<title>3D Printer Cost Calculator</title>
+<meta name="description" content="Calculate the true cost of your 3D prints: filament, electricity, amortization, waste allowance and profit margin.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -485,7 +485,7 @@
             <div class="field" data-field>
               <label for="electricityPrice" data-i18n="fElectricity"></label>
               <div class="input-wrap">
-                <input type="number" id="electricityPrice" step="any" min="0" inputmode="decimal" placeholder="2,55">
+                <input type="number" id="electricityPrice" step="any" min="0" inputmode="decimal" placeholder="2.55">
                 <span class="unit" id="unitElectricity"></span>
               </div>
               <span class="field-error" data-i18n="errNumber"></span>
@@ -552,7 +552,7 @@
             <div class="field" data-field>
               <label for="printHours" data-i18n="fHours"></label>
               <div class="input-wrap">
-                <input type="number" id="printHours" step="any" min="0" inputmode="decimal" placeholder="6,5">
+                <input type="number" id="printHours" step="any" min="0" inputmode="decimal" placeholder="6.5">
                 <span class="unit">h</span>
               </div>
               <span class="field-error" data-i18n="errNumber"></span>
@@ -785,11 +785,10 @@
 
   const CURRENCY_SYMBOLS = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' };
 
-  let lang = 'tr';
+  let lang = 'en';
   try {
     const saved = localStorage.getItem('baski-dil');
     if (saved === 'tr' || saved === 'en') lang = saved;
-    else if ((navigator.language || '').toLowerCase().startsWith('en')) lang = 'en';
   } catch (e) {}
 
   let currency = 'TRY';

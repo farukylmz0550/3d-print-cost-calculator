@@ -1,78 +1,79 @@
-# 3D Yazıcı Maliyet Hesaplayıcı
+# 3D Printer Cost Calculator
 
-> 3D baskı alacaklarınızın gerçek maliyetini ve satış fiyatını hesaplayan tek dosyalık, internet gerektirmeyen bir araç.
+> A single-file, offline-friendly tool that works out the true cost of a 3D print — and the price you should sell it for.
 
-Tarayıcınızda açın, sabit ayarlarınızı (filament fiyatı, elektrik, fire, kâr oranı, amorti) bir kez girin, profil olarak kaydedin. Sonra sadece her baskının ağırlığını ve süresini yazıp **Hesapla**'ya basın.
+Open it in your browser, enter your fixed settings once (filament price, electricity, waste allowance, profit margin, amortization) and save them as a profile. From then on, just type each print's weight and duration and press **Calculate**.
 
 ---
 
-## Özellikler
+## Features
 
 | | |
 |---|---|
-| 🧮 **Şeffaf hesap** | Filament, elektrik ve amorti kalemleri ayrı ayrı gösterilir |
-| 🏷️ **Maliyet ≠ kâr** | Üretim maliyeti (kâr hariç) ve kâr payı ayrı satırlarda; en altta satış fiyatı |
-| 💾 **Profiller** | Sabit ayarlarınızı isim vererek kaydedin/yükleyin/silin — tarayıcıda saklanır |
-| 📦 **Yedekleme** | Tüm profilleri JSON olarak dışa/içe aktarın |
-| 🌍 **TR/EN** | Türkçe ve İngilizce arayüz, tek düğmeyle geçiş |
-| 💱 **Para birimi** | ₺, $, €, £ — profil ile birlikte kaydedilir |
-| 🌓 **İki tema** | Fine Porcelain × Burnt Ochre (açık) · Ink & Copper (koyu) |
-| 🔒 **Gizlilik** | Veri hiçbir yere gönderilmez; sunucu, hesap, çerez yok |
-| ⚡ **Tek dosya** | `index.html` — çift tıklayın, çalışır |
+| 🧮 **Transparent breakdown** | Filament, electricity and amortization shown as separate line items |
+| 🏷️ **Cost ≠ profit** | Production cost (profit excluded) and profit margin on their own lines; sale price at the bottom |
+| 💾 **Profiles** | Save/load/delete your fixed settings under a name — stored in your browser |
+| 💱 **Currency** | ₺, $, € or £ — saved with the profile |
+| 🌍 **TR/EN** | Turkish and English interface, one-click switch |
+| 🌓 **Two themes** | Fine Porcelain × Burnt Ochre (light) · Ink & Copper (dark) |
+| 🔒 **Privacy** | Nothing leaves your device — no server, no account, no cookies |
+| ⚡ **Single file** | `index.html` — double-click and it works |
 
-## Hesaplama
+## The Calculation
 
 ```
-Filament        = baskı ağırlığı ÷ 1000 × filament fiyatı × (1 + fire%)
-Elektrik        = (yazıcı gücü ÷ 1000) × baskı süresi × kWh fiyatı
-Amorti          = sabit tutar
+Filament        = print weight ÷ 1000 × price per kg × (1 + waste%)
+Electricity     = (printer power ÷ 1000) × print duration × kWh price
+Amortization    = fixed amount
 ──────────────────────────────────────────────────────────────
-Üretim maliyeti = filament + elektrik + amorti          (kâr hariç)
-Kâr payı        = üretim maliyeti × kâr oranı %
-Satış fiyatı    = üretim maliyeti + kâr payı
+Production cost = filament + electricity + amortization   (excludes profit)
+Profit margin   = production cost × profit %
+Sale price      = production cost + profit margin
 ```
 
-**Örnek:** 85 g PLA, 6,5 saat baskı; filament 650 ₺/kg, 150 W, elektrik 2,55 ₺/kWh, %5 fire, %30 kâr, 10 ₺ amorti →
+**Example:** 85 g PLA, 6.5 h print; filament 650 ₺/kg, 150 W, electricity 2.55 ₺/kWh, 5% waste, 30% profit, 10 ₺ amortization →
 
-| Kalem | Tutar |
+| Item | Amount |
 |---|---:|
-| Filament | 59,61 ₺ |
-| Elektrik | 2,49 ₺ |
-| Amorti | 10,00 ₺ |
-| **Üretim maliyeti** | **72,10 ₺** |
-| Kâr payı (%30) | 21,63 ₺ |
-| **Satış fiyatı** | **93,73 ₺** |
+| Filament | 59.61 ₺ |
+| Electricity | 2.49 ₺ |
+| Amortization | 10.00 ₺ |
+| **Production cost** | **72.10 ₺** |
+| Profit margin (30%) | 21.63 ₺ |
+| **Sale price** | **93.73 ₺** |
 
-## Kullanım
+## Usage
 
-1. `index.html` dosyasını herhangi bir tarayıcıda açın.
-2. **Sabit Ayarlar** bölümünü doldurun; **Para birimi**'ni seçin (₺ / $ / € / £).
-3. **Baskı Bilgileri**'ne slicer'dan aldığınız ağırlığı ve süreyi girin, **Hesapla**'ya basın.
-4. **Profiller** bölümünden ayar setinizi kaydedin; farklı malzemeler/fiyatlar için ayrı profiller tutun.
-5. Yedeklemek için **Dışa aktar**, başka bir bilgisayara taşımak için **İçe aktar**.
-6. Sağ üstteki **EN/TR** düğmesiyle arayüz dilini değiştirin.
+1. Open `index.html` in any browser.
+2. Fill in the **Fixed Settings** and pick a **Currency** (₺ / $ / € / £).
+3. Enter the weight and duration from your slicer under **Print Details**, press **Calculate**.
+4. Save your settings under a name in **Profiles**; keep separate profiles for different materials or prices.
+5. Use **Export** to back up all profiles as JSON, **Import** to restore them elsewhere.
+6. Switch the interface language with the **EN/TR** button in the top right.
 
-## Tasarım
+## Design
 
-Arayüz, [Book Shelf](https://github.com/farukylmz0550/bookshelf-web) projesinin **UI Design Language** dokümanını izler:
+The interface follows the **UI Design Language** document of the [Book Shelf](https://github.com/farukylmz0550/bookshelf-web) project:
 
-- **Tema 1 — Fine Porcelain × Burnt Ochre:** `#FAF0E1` zemin, `#BB4F35` aksan; sıcak ve sakin
-- **Tema 2 — Ink & Copper:** `#1D2020` zemin, `#C17A5E` aksan; koyu ve derin
-- **Tipografi:** Noto Serif (başlıklar) · Noto Sans (arayüz) · Noto Sans Mono (sayısal değerler)
-- **Geometri:** 4/8/12 px yarıçap ailesi, sade kenarlıklar, kısıtlı gölge
+- **Theme 1 — Fine Porcelain × Burnt Ochre:** `#FAF0E1` background, `#BB4F35` accent; warm and calm
+- **Theme 2 — Ink & Copper:** `#1D2020` background, `#C17A5E` accent; dark and deep
+- **Typography:** Noto Serif (headings) · Noto Sans (interface) · Noto Sans Mono (numeric values)
+- **Geometry:** 4/8/12 px radius family, plain borders, restrained shadows
 
-Bilinçli olarak **kaçınılan** şeyler: glassmorphism, gradient ağırlıklı "modern" şablonlar, generic SaaS dashboard görünümü, gereksiz kart yığını.
+Deliberately **avoided**: glassmorphism, gradient-heavy "modern" templates, generic SaaS dashboard looks, unnecessary card piles.
 
-> İlke: *Clarity before decoration* — netlik, süslemeden önce gelir.
+> Principle: *Clarity before decoration.*
 
-## Teknik
+## Technical Notes
 
-- Tek `index.html`; bağımlılık yok, derleme yok, sunucu yok
-- Profiller `localStorage`'da; dil, tema ve para birimi tercihi de tarayıcıda kalır
-- Sayı biçimleme dile göre değişir: `tr-TR` (72,10 ₺) / `en-US` (72.10 $)
-- Noto fontları Google Fonts'tan yüklenir (bağlantı yoksa sistem fontlarına düşer, sayfa çalışmaya devam eder)
-- `prefers-reduced-motion` desteği, klavye erişilebilirliği, `aria-live` sonuç güncellemesi
+- A single `index.html`; no dependencies, no build step, no server
+- Profiles live in `localStorage`; the language, theme and currency preferences do too
+- Number formatting follows the interface language: `tr-TR` (72,10 ₺) / `en-US` (72.10 $)
+- Noto fonts load from Google Fonts (falls back to system fonts offline; the page keeps working)
+- Supports `prefers-reduced-motion`, keyboard navigation and `aria-live` result updates
 
-## Lisans
+## License
 
-GPLv3 — bkz. [LICENSE](LICENSE).
+This project is released under **CC0 1.0 Universal** (public domain) — see [LICENSE](LICENSE).
+
+You can copy, modify, distribute and use it, even commercially, without asking permission.
