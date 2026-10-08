@@ -14,6 +14,8 @@ Tarayıcınızda açın, sabit ayarlarınızı (filament fiyatı, elektrik, fire
 | 🏷️ **Maliyet ≠ kâr** | Üretim maliyeti (kâr hariç) ve kâr payı ayrı satırlarda; en altta satış fiyatı |
 | 💾 **Profiller** | Sabit ayarlarınızı isim vererek kaydedin/yükleyin/silin — tarayıcıda saklanır |
 | 📦 **Yedekleme** | Tüm profilleri JSON olarak dışa/içe aktarın |
+| 🌍 **TR/EN** | Türkçe ve İngilizce arayüz, tek düğmeyle geçiş |
+| 💱 **Para birimi** | ₺, $, €, £ — profil ile birlikte kaydedilir |
 | 🌓 **İki tema** | Fine Porcelain × Burnt Ochre (açık) · Ink & Copper (koyu) |
 | 🔒 **Gizlilik** | Veri hiçbir yere gönderilmez; sunucu, hesap, çerez yok |
 | ⚡ **Tek dosya** | `index.html` — çift tıklayın, çalışır |
@@ -44,10 +46,11 @@ Satış fiyatı    = üretim maliyeti + kâr payı
 ## Kullanım
 
 1. `index.html` dosyasını herhangi bir tarayıcıda açın.
-2. **Sabit Ayarlar** bölümünü doldurun (kaydedilen son değerler hesaplanırken kullanılır).
+2. **Sabit Ayarlar** bölümünü doldurun; **Para birimi**'ni seçin (₺ / $ / € / £).
 3. **Baskı Bilgileri**'ne slicer'dan aldığınız ağırlığı ve süreyi girin, **Hesapla**'ya basın.
 4. **Profiller** bölümünden ayar setinizi kaydedin; farklı malzemeler/fiyatlar için ayrı profiller tutun.
 5. Yedeklemek için **Dışa aktar**, başka bir bilgisayara taşımak için **İçe aktar**.
+6. Sağ üstteki **EN/TR** düğmesiyle arayüz dilini değiştirin.
 
 ## Tasarım
 
@@ -65,7 +68,8 @@ Bilinçli olarak **kaçınılan** şeyler: glassmorphism, gradient ağırlıklı
 ## Teknik
 
 - Tek `index.html`; bağımlılık yok, derleme yok, sunucu yok
-- Profiller `localStorage`'da; tema tercihı da tarayıcıda kalır
+- Profiller `localStorage`'da; dil, tema ve para birimi tercihi de tarayıcıda kalır
+- Sayı biçimleme dile göre değişir: `tr-TR` (72,10 ₺) / `en-US` (72.10 $)
 - Noto fontları Google Fonts'tan yüklenir (bağlantı yoksa sistem fontlarına düşer, sayfa çalışmaya devam eder)
 - `prefers-reduced-motion` desteği, klavye erişilebilirliği, `aria-live` sonuç güncellemesi
 
